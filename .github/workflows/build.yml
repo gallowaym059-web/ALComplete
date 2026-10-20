@@ -1,0 +1,46 @@
+name: Build ALComplete
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Android ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: android64
+          - arch: android32
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Geode SDK
+        uses: geode-sdk/setup-geode@main
+        with:
+          sdk: "5.11.0"
+
+      - name: Validate project
+        run: python3 scripts/validate_project.py
+
+      - name: Build mod
+        run: geode build -p ${{ matrix.arch }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ALComplete-${{ matrix.arch }}
+          path: |
+            build/*.geode
+            *.geode
+          if-no-files-found: error
