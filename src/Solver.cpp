@@ -176,12 +176,38 @@ namespace al::solver {
 
         // ---- route choice -------------------------------------------------------------
         bool chooseFirst(PlayLayer* pl) {
-            bool def = continuous(detectMode(pl->m_player1)) ? g.held : false;
-            if (g.cfg.route == 0) return def;                       // Simplest: change nothing unless forced
-            int keep = survival(pl, g.held, def, g.cfg.lookahead);  // Safest: whichever lives longer first
-            if (keep > g.cfg.lookahead) return def;
-            int other = survival(pl, g.held, !def, g.cfg.lookahead);
-            return other > keep ? !def : def;
+            auto mode = detectMode(pl->m_player1);
+            bool def = continuous(mode) ? g.held : false;
+
+            // Predictive input selection applies to every supported classic mode.
+            // Horizons are mode-aware: continuous vertical-control modes need more
+            // warning, while tap-driven modes use a shorter probe to limit false branches.
+            bool ship = mode == Mode::Ship;
+            bool wave = mode == Mode::Wave;
+            bool swing = mode == Mode::Swing;
+            bool ufo = mode == Mode::Ufo;
+            bool robot = mode == Mode::Robot;
+            bool spider = mode == Mode::Spider;
+            bool ball = mode == Mode::Ball;
+            int horizon = std::max(20, g.cfg.lookahead);
+            if (ship) horizon = std::max(horizon, 360);
+            else if (wave) horizon = std::max(horizon, 240);
+            else if (swing) horizon = std::max(horizon, 180);
+            else if (ufo || robot || spider || ball) horizon = std::max(horizon, 120);
+            else horizon = std::max(horizon, 90); // Cube
+
+            // Even Simplest route mode now checks whether its default input is safe.
+            // Preserve it whenever the current trajectory survives the prediction window.
+            int keep = survival(pl, g.held, def, horizon);
+            if (keep > horizon) return def;
+
+            int other = survival(pl, g.held, !def, horizon);
+            if (other > keep) return !def;
+            if (keep > other) return def;
+
+            // Both actions have the same predicted survival. Avoid unnecessary input
+            // churn; the solver's backtracking still explores the alternative if needed.
+            return def;
         }
 
         // ---- finishing ----------------------------------------------------------------
