@@ -6,9 +6,9 @@
   },
   "id": "bedrock.alcomplete",
   "name": "ALComplete",
-  "version": "v1.1.0",
+  "version": "v1.1.3",
   "developer": "bedrock",
-  "description": "ALComplete \u2014 Auto Levels Complete. Searches for a survivable input path, verifies it by replay, and can play it back. Experimental; not every level is supported.",
+  "description": "Experimental Geometry Dash solver with mode-aware predictive steering for supported classic modes, route search, and customizable floating UI.",
   "repository": "https://github.com/gallowaym059-web/GD-Pathfinder",
   "settings": {
     "show-button": {
