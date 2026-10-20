@@ -1,0 +1,21 @@
+{
+  "geode": "5.11.0",
+  "gd": {
+    "win": "2.2081",
+    "android": "2.2081"
+  },
+  "id": "bedrock.alcomplete",
+  "name": "ALComplete",
+  "version": "v1.1.0",
+  "developer": "bedrock",
+  "description": "ALComplete \u2014 Auto Levels Complete. Searches for a survivable input path, verifies it by replay, and can play it back. Experimental; not every level is supported.",
+  "repository": "https://github.com/gallowaym059-web/GD-Pathfinder",
+  "settings": {
+    "show-button": {
+      "type": "bool",
+      "name": "Show Floating Button",
+      "default": true,
+      "description": "Hides the draggable ALComplete circle. Everything else is configured from inside the ALComplete menu."
+    }
+  }
+}
