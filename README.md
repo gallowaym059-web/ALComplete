@@ -34,3 +34,13 @@ This checks metadata, required files, UI controls, and important solver-clock in
 ## Important implementation note
 
 Replay timing must use a deterministic logical physics-tick counter, not the level's displayed progress percentage. ALComplete now tracks logical ticks across simulation steps, resets, and checkpoint restores. This fixes a fundamental replay-clock issue, but additional solver correctness work and gameplay testing are still required.
+
+
+### v1.1.2 prediction changes
+- Wave now uses predictive hold/release comparisons even when Simplest route mode is selected.
+- Wave prediction uses a minimum 240-physics-tick lookahead; Ship retains its 360-tick minimum.
+- This is a heuristic, not a complete physics proof. Ghost simulation may diverge from live gameplay, and actual Android build/gameplay testing is still required.
+
+
+### v1.1.3 classic-mode prediction
+Predictive input comparison now runs in all supported classic modes: Cube, Ship, Ball, UFO, Wave, Robot, Spider, and Swing. Minimum lookahead horizons are 90 ticks for Cube, 120 for Ball/UFO/Robot/Spider, 180 for Swing, 240 for Wave, and 360 for Ship (the configured lookahead can be longer). These are heuristic starting points, not validated optimal values. The current ghost simulation may diverge from live gameplay, especially around mode portals, triggers, dual mode, and complex physics. Platformer remains unsupported.
