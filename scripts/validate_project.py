@@ -34,6 +34,23 @@ require("g.tick = 0;" in solver, "logical physics tick counter is not reset at l
 require("g.tick = n.tick;" in solver, "logical physics tick counter is not restored with checkpoints")
 require("m_gameState.m_currentProgress" not in solver,
         "solver is incorrectly using level progress as a replay clock")
+require("bool ship = mode == Mode::Ship;" in solver,
+        "Ship-specific predictive route selection missing")
+require("horizon = std::max(horizon, 360);" in solver,
+        "Ship prediction horizon was not extended")
+require("Even Simplest route mode now checks whether its default input is safe." in solver,
+        "all-mode prediction must also run in Simplest route mode")
+require("horizon = std::max(horizon, 360);" in solver,
+        "Ship prediction horizon was not extended")
+require("horizon = std::max(horizon, 240);" in solver,
+        "Wave prediction horizon was not extended")
+require("horizon = std::max(horizon, 180);" in solver,
+        "Swing prediction horizon was not extended")
+require("horizon = std::max(horizon, 120);" in solver,
+        "other classic-mode prediction horizon was not extended")
+predict = (root / "src/Predict.cpp").read_text(encoding="utf-8")
+require("!L->m_player1 || ticks <= 0" in predict,
+        "look-ahead simulation input validation missing")
 
 hub = (root / "src/Hub.cpp").read_text(encoding="utf-8")
 for feature in ("Solver", "Route", "Visuals", "Appearance", "Safety", "Diagnostics"):
