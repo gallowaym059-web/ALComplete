@@ -130,7 +130,7 @@ namespace al::solver {
         void stepOnce(PlayLayer* pl, StepFn const& step, int ticks) {
             g.died = false;
             pl->m_extraDelta = 0.0;
-            step(static_cast<float>((ticks + 0.5) / TPS));   // advance the real game's physics
+            step(static_cast<float>(ticks / TPS));          // exact fixed-step duration; no half-tick offset
             g.tick += static_cast<uint32_t>(std::max(0, ticks));
         }
 
@@ -179,6 +179,11 @@ namespace al::solver {
             auto mode = detectMode(pl->m_player1);
             bool def = continuous(mode) ? g.held : false;
 
+            // Wave's narrow corridors make the current approximate ghost predictor
+            // unreliable: false collision estimates can cause needless route flips.
+            // Let real-game checkpoint search choose Wave inputs instead.
+            if (mode == Mode::Wave) return def;
+
             // Predictive input selection applies to every supported classic mode.
             // Horizons are mode-aware: continuous vertical-control modes need more
             // warning, while tap-driven modes use a shorter probe to limit false branches.
@@ -202,11 +207,16 @@ namespace al::solver {
             if (keep > horizon) return def;
 
             int other = survival(pl, g.held, !def, horizon);
-            if (other > keep) return !def;
-            if (keep > other) return def;
+            // Ghost prediction is approximate (especially around mode portals, dual
+            // sections and trigger-driven physics). Require a meaningful improvement
+            // before switching away from the natural/default input; this reduces noisy
+            // input flipping and needless search branches without disabling backtracking.
+            int margin = std::max(3, horizon / 60);
+            if (other > keep + margin) return !def;
+            if (keep >= other) return def;
 
-            // Both actions have the same predicted survival. Avoid unnecessary input
-            // churn; the solver's backtracking still explores the alternative if needed.
+            // Near-ties prefer the default. Real-game checkpoint search remains the
+            // final authority and can still explore the alternate input after a death.
             return def;
         }
 
@@ -347,8 +357,14 @@ namespace al::solver {
             }
         }
 
+        uint32_t checkpointInterval(PlayLayer*) {
+            // Frame-perfect inputs can exist on any single 240 Hz physics tick.
+            // Keep a branch point every tick so the search never jumps over one.
+            return 1;
+        }
+
         void searchStep(PlayLayer* pl, StepFn const& step) {
-            stepOnce(pl, step, g.cfg.ticksPerStep);
+            stepOnce(pl, step, 1);
             if (g.phase != Phase::Solving) return;
             if (reachedEnd(pl)) { g.path.push_back(pl->m_player1->getPosition()); onPathFound(pl); return; }
             if (g.died) { backtrack(pl); return; }
@@ -356,7 +372,7 @@ namespace al::solver {
             g.path.push_back(pl->m_player1->getPosition());
             g.percent = pl->getCurrentPercent();
             g.best = std::max(g.best, g.percent);
-            if (!g.stack.empty() && curTick(pl) >= g.stack.back().tick + (uint32_t)g.cfg.ticksPerStep) pushNode(pl);
+            if (!g.stack.empty() && curTick(pl) >= g.stack.back().tick + checkpointInterval(pl)) pushNode(pl);
         }
 
         void replayStep(PlayLayer* pl, StepFn const& step) {
@@ -376,13 +392,13 @@ namespace al::solver {
                 return;
             }
             applyScheduled(pl);
-            stepOnce(pl, step, g.cfg.ticksPerStep);
+            stepOnce(pl, step, 1);
             if (g.died || reachedEnd(pl)) finishSolve(pl, false, "Replay desynced (the level may be non-deterministic).", -1);
         }
 
         void verifyStep(PlayLayer* pl, StepFn const& step) {
             applyScheduled(pl);
-            stepOnce(pl, step, g.cfg.ticksPerStep);
+            stepOnce(pl, step, 1);
             if (reachedEnd(pl)) { finishSolve(pl, true, "", 1); return; }
             if (g.died || curTick(pl) > g.verifyDeadline) finishSolve(pl, true, "", 0);
         }
