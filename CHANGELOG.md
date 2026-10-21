@@ -39,3 +39,24 @@ Completely new mod (formerly "AI Pathfinder").
 - Generalized predictive input selection to Cube, Ship, Ball, UFO, Wave, Robot, Spider, and Swing.
 - Added mode-aware minimum lookahead horizons; Simplest route mode now checks whether the default input is safe instead of skipping prediction for non-Ship/Wave modes.
 - This is still a heuristic using the existing ghost simulation. Physics parity, mode transitions, dual mode, compilation, and in-game behavior require testing.
+
+
+## v1.1.4 — classic-mode stability and UI fitting
+- Predictive choice now requires a small survival advantage before switching away from the default input, reducing noisy input flips caused by approximate ghost predictions. The checkpoint/backtracking search remains enabled.
+- Setting names are scaled to fit their column; changing slider/cycle values are clamped to their value column. Help/info text keeps a fixed-width label to wrap within the panel.
+- These are heuristic/UI safeguards, not proof that every mode's physics is fully modeled. Geode compilation and in-game validation are still required.
+
+
+## v1.1.5
+- Disable approximate ghost-based route choice for Wave; rely on real-game checkpoint search to avoid false prediction flips.
+- Increase checkpoint density for non-Cube modes to provide more nearby alternatives after deaths.
+- Cube retains its existing checkpoint cadence.
+- Faster/denser backtracking is a heuristic change; performance and behavior require in-game testing.
+
+
+## v1.1.6 — frame-step-accurate search
+- Solver search, checkpoint replay, and solution verification now advance exactly one 1/240-second physics tick per step, regardless of the old Ticks per step preference.
+- Corrected the timestep calculation to remove the previous extra half-tick offset.
+- Create a backtracking decision point every physics tick so single-frame-perfect input windows are not skipped by multi-tick advances.
+- Removed the obsolete Ticks per step control from the settings menu; the saved field is retained for compatibility.
+- This improves temporal granularity, but does not guarantee every level can be solved: checkpoint completeness, dual-mode/trigger determinism, and game-hook behavior still need in-game validation.
