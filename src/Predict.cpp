@@ -7,7 +7,7 @@ using namespace geode::prelude;
 namespace al {
     int survival(GJBaseGameLayer* L, bool held, bool hold, int ticks) {
         auto& S = sim();
-        if (!S.fake1) return ticks + 1;
+        if (!S.fake1 || !L->m_player1 || ticks <= 0) return ticks + 1;
         bool dual = L->m_gameState.m_isDualMode && L->m_player2 && S.fake2;
 
         PlayerState a;
