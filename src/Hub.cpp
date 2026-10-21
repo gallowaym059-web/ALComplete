@@ -174,7 +174,6 @@ namespace al {
         solverCat.rows.push_back(toggle("Auto-solve on level start", &st.autoSolve));
         solverCat.rows.push_back(toggle("Auto-play when solved", &st.autoPlay));
         solverCat.rows.push_back(slider("Time per frame (ms)", &st.budgetMs, 2.f, 30.f, 1.f));
-        solverCat.rows.push_back(islider("Ticks per step", &st.ticksPerStep, 1.f, 8.f, 1.f));
         solverCat.rows.push_back(islider("Max checkpoints", &st.maxCheckpoints, 50.f, 2000.f, 50.f));
         m_cats.push_back(std::move(solverCat));
 
@@ -364,6 +363,13 @@ namespace al {
                 default: {
                     r.nameLbl = ui::label(m_rows, r.name, "chatFont.fnt", 0.5f, {232, 236, 248},
                                           ccp(x0 + 10, cy), ccp(0, 0.5f), 3);
+                    // Keep long setting names inside the label column on narrow screens.
+                    {
+                        float maxW = (r.type == RT::Slider || r.type == RT::Cycle) ? 126.f : cw - 24.f;
+                        float renderedW = r.nameLbl->getContentSize().width * r.nameLbl->getScale();
+                        if (renderedW > maxW && renderedW > 0.f)
+                            r.nameLbl->setScale(r.nameLbl->getScale() * maxW / renderedW);
+                    }
                     m_lbls.push_back({r.nameLbl, 1.f});
                     if (r.type == RT::Slider || r.type == RT::Cycle) {
                         float right = x0 + cw;
@@ -391,7 +397,20 @@ namespace al {
             if (s != r.cache && r.valLbl) {
                 r.cache = s;
                 r.valLbl->setString(s.c_str());
-                if (r.type == RT::Info) r.valLbl->setAnchorPoint(ccp(0, 0.5f));
+                if (r.type == RT::Info) {
+                    r.valLbl->setAnchorPoint(ccp(0, 0.5f));
+                    // Info rows use a fixed-width BMFont label, so long help text wraps
+                    // instead of escaping the panel bounds.
+                    r.valLbl->setScale(0.5f);
+                } else {
+                    // Values can change at runtime (for example, large tick counts).
+                    // Shrink them to fit the value column rather than drawing over labels.
+                    float maxW = (r.type == RT::Cycle) ? 62.f : 86.f;
+                    float baseScale = 0.46f;
+                    float renderedW = r.valLbl->getContentSize().width * baseScale;
+                    r.valLbl->setScale(renderedW > maxW && renderedW > 0.f
+                        ? baseScale * maxW / renderedW : baseScale);
+                }
             }
         }
     }
